@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /**
- * One-time setup: creates the Whop product and the three plans this site sells
- * (inspection fee, project deposit, flat-rate service) using the Whop CLI, then
- * writes their IDs into src/config/site.ts.
+ * One-time setup with the Whop CLI:
+ *   1. creates the Whop product and the three plans this site sells (inspection
+ *      fee, project deposit, flat-rate service) and writes their IDs into
+ *      src/config/site.ts;
+ *   2. turns on "Sign in with Whop" for this app (public OAuth client + the
+ *      /estimate/verified return address on every domain), which the estimate
+ *      form uses to confirm the homeowner's email before creating the lead.
  *
  *   node scripts/setup-whop.mjs
  *
@@ -18,19 +22,22 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const configPath = path.join(root, 'src/config/site.ts')
 let config = readFileSync(configPath, 'utf8')
 
-function whop(args) {
+function whopJson(args) {
   const out = execFileSync('whop', [...args, '--format', 'json'], {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
     shell: process.platform === 'win32',
   })
-  let data
   try {
-    data = JSON.parse(out)
+    return { out, data: JSON.parse(out) }
   } catch {
-    data = null
+    return { out, data: null }
   }
+}
+
+function whop(args) {
+  const { out, data } = whopJson(args)
   const id = data?.id ?? data?.data?.id ?? data?.result?.id ?? out.match(/"id"\s*:\s*"([a-z]+_[A-Za-z0-9]+)"/)?.[1]
   if (!id) {
     console.error(out)
@@ -96,5 +103,16 @@ for (const key of ['inspection', 'deposit', 'flatRate']) {
   writeFileSync(configPath, config)
   console.log(`  ${key.padEnd(12)}${planId}`)
 }
+
+// 3. "Sign in with Whop" for the estimate form's email check
+const appId = JSON.parse(readFileSync(path.join(root, 'whop.app.json'), 'utf8')).app_id
+const { data: appData } = whopJson(['apps', 'get', appId])
+const app = appData?.data ?? appData ?? {}
+const hosts = new Set((app.domains ?? []).map((d) => d.domain).filter(Boolean))
+if (app.base_url) hosts.add(new URL(app.base_url).host)
+const redirectUris = [...[...hosts].map((h) => `https://${h}/estimate/verified`), 'http://localhost:3000/estimate/verified']
+console.log('Turning on "Sign in with Whop" for estimate requests…')
+whopJson(['apps', 'update', appId, '--oauth_client_type', 'public', '--redirect_uris', JSON.stringify(redirectUris)])
+for (const uri of redirectUris) console.log(`  return URL  ${uri}`)
 
 console.log('\nDone. IDs saved to src/config/site.ts. Next: whop apps deploy')

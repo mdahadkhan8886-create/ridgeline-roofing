@@ -19,6 +19,7 @@ import { Route as ApiPayRouteImport } from './routes/api/pay'
 import { Route as ApiPublicConfigRouteImport } from './routes/api/public-config'
 import { Route as BookPlanKeyRouteImport } from './routes/book.$planKey'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout/return'
+import { Route as EstimateVerifiedRouteImport } from './routes/estimate/verified'
 import { Route as ApiAdminInvoiceRouteImport } from './routes/api/admin/invoice'
 import { Route as ApiAdminOverviewRouteImport } from './routes/api/admin/overview'
 
@@ -72,6 +73,11 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EstimateVerifiedRoute = EstimateVerifiedRouteImport.update({
+  id: '/estimate/verified',
+  path: '/estimate/verified',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminInvoiceRoute = ApiAdminInvoiceRouteImport.update({
   id: '/api/admin/invoice',
   path: '/api/admin/invoice',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/api/public-config': typeof ApiPublicConfigRoute
   '/book/$planKey': typeof BookPlanKeyRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/estimate/verified': typeof EstimateVerifiedRoute
   '/api/admin/invoice': typeof ApiAdminInvoiceRoute
   '/api/admin/overview': typeof ApiAdminOverviewRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/api/public-config': typeof ApiPublicConfigRoute
   '/book/$planKey': typeof BookPlanKeyRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/estimate/verified': typeof EstimateVerifiedRoute
   '/api/admin/invoice': typeof ApiAdminInvoiceRoute
   '/api/admin/overview': typeof ApiAdminOverviewRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/api/public-config': typeof ApiPublicConfigRoute
   '/book/$planKey': typeof BookPlanKeyRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/estimate/verified': typeof EstimateVerifiedRoute
   '/api/admin/invoice': typeof ApiAdminInvoiceRoute
   '/api/admin/overview': typeof ApiAdminOverviewRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/api/public-config'
     | '/book/$planKey'
     | '/checkout/return'
+    | '/estimate/verified'
     | '/api/admin/invoice'
     | '/api/admin/overview'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/api/public-config'
     | '/book/$planKey'
     | '/checkout/return'
+    | '/estimate/verified'
     | '/api/admin/invoice'
     | '/api/admin/overview'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/api/public-config'
     | '/book/$planKey'
     | '/checkout/return'
+    | '/estimate/verified'
     | '/api/admin/invoice'
     | '/api/admin/overview'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   ApiPublicConfigRoute: typeof ApiPublicConfigRoute
   BookPlanKeyRoute: typeof BookPlanKeyRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  EstimateVerifiedRoute: typeof EstimateVerifiedRoute
   ApiAdminInvoiceRoute: typeof ApiAdminInvoiceRoute
   ApiAdminOverviewRoute: typeof ApiAdminOverviewRoute
 }
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/estimate/verified': {
+      id: '/estimate/verified'
+      path: '/estimate/verified'
+      fullPath: '/estimate/verified'
+      preLoaderRoute: typeof EstimateVerifiedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/invoice': {
       id: '/api/admin/invoice'
       path: '/api/admin/invoice'
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicConfigRoute: ApiPublicConfigRoute,
   BookPlanKeyRoute: BookPlanKeyRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  EstimateVerifiedRoute: EstimateVerifiedRoute,
   ApiAdminInvoiceRoute: ApiAdminInvoiceRoute,
   ApiAdminOverviewRoute: ApiAdminOverviewRoute,
 }

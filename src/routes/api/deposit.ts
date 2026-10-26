@@ -34,6 +34,7 @@ export const Route = createFileRoute('/api/deposit')({
                 flow: 'deposit',
                 job_ref: jobRef,
                 customer_name: str(body.name, 120),
+                email: str(body.email, 200).toLowerCase(),
                 phone: str(body.phone, 40),
                 property_address: str(body.address, 200),
                 zip: str(body.zip, 10),

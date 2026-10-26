@@ -117,7 +117,16 @@ export function str(value: unknown, max = 500): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : ''
 }
 
+/**
+ * The site's public origin as the visitor's browser sees it. Behind Whop
+ * hosting the worker's own request URL can be an internal host, so prefer the
+ * browser's Origin header, then the forwarded host.
+ */
 export function siteOrigin(request: Request): string {
+  const origin = request.headers.get('origin')
+  if (origin && /^https?:\/\/[^/]+$/.test(origin)) return origin
+  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
+  if (host) return `${/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host) ? 'http' : 'https'}://${host}`
   return new URL(request.url).origin
 }
 

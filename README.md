@@ -10,7 +10,7 @@ A production-ready website template for a US roofing company, built on **Whop We
 | Services (repair, replacement, inspection), service area, financing, reviews/trust, contact | `src/components/sections/*` |
 | Real plans: $149 inspection, $500 deposit, $349 flat-rate service | `src/config/site.ts` → `plans`, created by `scripts/setup-whop.mjs` |
 | Payment Elements checkout: ExpressCheckoutElement + PaymentElement + BrandingElement | `src/components/checkout/PlanCheckout.tsx`, `useWhopPayments.ts` |
-| "Request an estimate" → Whop Leads API | `src/components/sections/Estimate.tsx` → `POST /api/lead` → `POST /leads` |
+| "Request an estimate" → Whop Leads API | `src/components/sections/Estimate.tsx` → Sign in with Whop (email code) → `src/routes/estimate/verified.tsx` → `POST /api/lead` → `POST /leads` |
 | Card on file via a setup intent at deposit checkout | `src/components/checkout/DepositCheckout.tsx` → `POST /api/deposit` → `POST /setup_intents`, then `POST /payments` |
 | Final balance with the Invoices API (auto-charge or send) | `/contractor` → `POST /api/admin/invoice` → `POST /invoices` |
 | Custom pixel events `estimate_requested`, `service_viewed`, `deposit_started` | `src/lib/track.ts` (`whop.track`) |
@@ -27,7 +27,8 @@ You need Node 22+ and the Whop CLI signed in to your business (`whop quickstart`
 ```sh
 npm install
 
-# 1. Create the product and the three plans in Whop, and save their IDs to the config
+# 1. Create the product and the three plans in Whop, save their IDs to the config,
+#    and turn on "Sign in with Whop" (used to verify estimate requests)
 node scripts/setup-whop.mjs
 
 # 2. Choose a PIN for the contractor console (/contractor)
@@ -45,7 +46,7 @@ Wallet buttons only render on a domain registered for Apple Pay. The verificatio
 
 ## How each flow works
 
-**Estimate request.** The form posts to `/api/lead`, which creates a Whop lead (`POST /api/v1/leads`) with the contact details, property, service and timeline in `metadata`. On success the browser fires `estimate_requested` (and the standard `lead` event) with the lead ID as `event_id`.
+**Estimate request.** Whop's Leads API records every lead against a Whop user, so the homeowner confirms their email first: "Verify email and send request" saves the form and opens Sign in with Whop (OAuth 2.1 + PKCE; Whop emails a one-time code, no password). On return, `/estimate/verified` posts the answers and the one-time code to `/api/lead`, which exchanges the code, reads the verified user from `/oauth/userinfo`, and creates the lead (`POST /api/v1/leads` with `user_id`) with the property, service, roof type, timeline and message in `metadata`. The page then fires `estimate_requested` (and the standard `lead` event) with the lead ID as `event_id`. Spam bots can't create leads, and every lead has a verified email.
 
 **Inspection / flat-rate booking (`/book/inspection`, `/book/flatRate`).** `ExpressCheckoutElement` shows Apple Pay / Google Pay for the plan. Below it, `PaymentElement` + `BrandingElement` collect the card; the browser creates a confirmation token and `/api/pay` charges the plan with `POST /payments`. Any 3D Secure or bank step is finished with `handleNextAction`, and `/checkout/return` reads the outcome. Opening a booking page fires `service_viewed`.
 

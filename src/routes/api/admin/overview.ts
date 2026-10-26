@@ -71,7 +71,7 @@ export const Route = createFileRoute('/api/admin/overview')({
                     intent.payment_instrument?.display_name ||
                     (card?.last4 ? `${card.brand ?? 'Card'} •••• ${card.last4}` : 'Saved payment method'),
                   name: text(m.customer_name) || intent.member?.user?.name || '',
-                  email: intent.member?.user?.email || '',
+                  email: intent.member?.user?.email || text(m.email),
                   address: [text(m.property_address), text(m.zip)].filter(Boolean).join(', '),
                   jobRef: text(m.job_ref),
                 }

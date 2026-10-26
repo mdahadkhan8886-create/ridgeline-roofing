@@ -1,96 +1,84 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { site } from '#/config/site'
-import { track } from '#/lib/track'
+import { readDraft, startEmailVerification } from '#/lib/whop-oauth'
 
-type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; name: string } | { kind: 'error'; message: string }
+type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'error'; message: string }
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function EstimateForm() {
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
+  // Restores what the visitor typed if they come back from the Whop step.
+  const [saved, setSaved] = useState<Record<string, string>>({})
+  const [formKey, setFormKey] = useState(0)
+
+  useEffect(() => {
+    const draft = readDraft()
+    if (draft) {
+      setSaved(draft.form)
+      setFormKey((k) => k + 1)
+    }
+  }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = event.currentTarget
-    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>
+    if (data.company_website) return
+    if (!data.name?.trim()) return setStatus({ kind: 'error', message: 'Add your name so we know who to ask for.' })
+    if (!EMAIL.test(data.email?.trim() ?? '')) return setStatus({ kind: 'error', message: 'Add a valid email address.' })
+    if (!/^\d{5}$/.test(data.zip?.trim() ?? '')) return setStatus({ kind: 'error', message: 'Add the 5-digit ZIP code of the property.' })
+
     setStatus({ kind: 'sending' })
-
     try {
-      const response = await fetch('/api/lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, page: window.location.href }),
-      })
-      const result = (await response.json().catch(() => ({}))) as { leadId?: string | null; error?: string }
-      if (!response.ok) throw new Error(result.error || 'We couldn’t send your request. Please call us instead.')
-
-      // estimate_requested: fires once per lead, keyed by the Whop lead ID.
-      const eventId = result.leadId ?? undefined
-      track('estimate_requested', {
-        event_id: eventId,
-        service: data.service,
-        roof_type: data.roofType,
-        timeline: data.timeline,
-        zip: data.zip,
-      })
-      track('lead', { event_id: eventId, name: data.name, email: data.email, phone: data.phone })
-
-      setStatus({ kind: 'sent', name: data.name.split(' ')[0] || 'there' })
-      form.reset()
+      const config = (await fetch('/api/public-config').then((r) => r.json())) as { appId?: string | null }
+      if (!config.appId) throw new Error('Estimate requests are unavailable right now. Please call us.')
+      // The lead is created after the homeowner confirms their email on Whop
+      // (see /estimate/verified), because Whop leads belong to a Whop user.
+      await startEmailVerification(config.appId, data)
     } catch (error) {
       setStatus({ kind: 'error', message: error instanceof Error ? error.message : 'Something went wrong.' })
     }
   }
 
-  if (status.kind === 'sent') {
-    return (
-      <div role="status" className="rounded-md border-2 border-ink bg-white p-8">
-        <h3 className="heading m-0 text-[1.6rem]">Thanks, {status.name}. Your request is in.</h3>
-        <p className="mt-3 text-ink/85">
-          We’ll reply within one business day. If water is coming in right now, call our emergency line at{' '}
-          <a className="font-bold text-ink" href={`tel:${site.company.emergencyLine.replace(/[^\d+]/g, '')}`}>
-            {site.company.emergencyLine}
-          </a>
-          .
-        </p>
-        <button type="button" className="btn btn-ghost mt-6 text-ink" onClick={() => setStatus({ kind: 'idle' })}>
-          Send another request
-        </button>
-      </div>
-    )
-  }
-
   const sending = status.kind === 'sending'
 
   return (
-    <form onSubmit={submit} className="grid gap-5 rounded-md border-2 border-ink bg-white p-6 sm:p-8" aria-describedby="estimate-help">
+    <form
+      key={formKey}
+      onSubmit={submit}
+      noValidate
+      className="grid gap-5 rounded-md border-2 border-ink bg-white p-6 sm:p-8"
+      aria-describedby="estimate-help"
+    >
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="field">
           Full name
-          <input name="name" required autoComplete="name" />
+          <input name="name" required autoComplete="name" defaultValue={saved.name} />
         </label>
         <label className="field">
           Phone
-          <input name="phone" type="tel" autoComplete="tel" placeholder="(214) 555-0100" />
+          <input name="phone" type="tel" autoComplete="tel" placeholder="(214) 555-0100" defaultValue={saved.phone} />
         </label>
       </div>
       <label className="field">
         Email
-        <input name="email" type="email" required autoComplete="email" />
+        <input name="email" type="email" required autoComplete="email" defaultValue={saved.email} />
       </label>
       <div className="grid gap-5 sm:grid-cols-[2fr_1fr]">
         <label className="field">
           Property address
-          <input name="address" autoComplete="street-address" />
+          <input name="address" autoComplete="street-address" defaultValue={saved.address} />
         </label>
         <label className="field">
           ZIP code
-          <input name="zip" required inputMode="numeric" pattern="\d{5}" maxLength={5} autoComplete="postal-code" />
+          <input name="zip" required inputMode="numeric" pattern="\d{5}" maxLength={5} autoComplete="postal-code" defaultValue={saved.zip} />
         </label>
       </div>
       <div className="grid gap-5 sm:grid-cols-3">
         <label className="field">
           What do you need?
-          <select name="service" defaultValue="replacement">
+          <select name="service" defaultValue={saved.service ?? 'replacement'}>
             {site.services.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -101,7 +89,7 @@ function EstimateForm() {
         </label>
         <label className="field">
           Roof type
-          <select name="roofType" defaultValue={site.estimateForm.roofTypes[0]}>
+          <select name="roofType" defaultValue={saved.roofType ?? site.estimateForm.roofTypes[0]}>
             {site.estimateForm.roofTypes.map((t) => (
               <option key={t}>{t}</option>
             ))}
@@ -109,7 +97,7 @@ function EstimateForm() {
         </label>
         <label className="field">
           Timeline
-          <select name="timeline" defaultValue={site.estimateForm.timelines[0]}>
+          <select name="timeline" defaultValue={saved.timeline ?? site.estimateForm.timelines[0]}>
             {site.estimateForm.timelines.map((t) => (
               <option key={t}>{t}</option>
             ))}
@@ -118,7 +106,7 @@ function EstimateForm() {
       </div>
       <label className="field">
         Anything we should know?
-        <textarea name="message" placeholder="Leak over the kitchen after last week’s hail, roof is about 15 years old…" />
+        <textarea name="message" defaultValue={saved.message} placeholder="Leak over the kitchen after last week’s hail, roof is about 15 years old…" />
       </label>
       {/* Honeypot for bots — hidden from people and screen readers. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
@@ -136,10 +124,10 @@ function EstimateForm() {
 
       <div className="flex flex-wrap items-center gap-4">
         <button type="submit" className="btn btn-primary text-[1.05rem]" disabled={sending}>
-          {sending ? 'Sending…' : 'Request my estimate'}
+          {sending ? 'Opening Whop…' : 'Verify email and send request'}
         </button>
         <p id="estimate-help" className="m-0 text-sm text-muted">
-          Free, no obligation. We never sell your details.
+          Free, no obligation. Whop sends a one-time code to confirm your email (no password needed), then your request is sent.
         </p>
       </div>
     </form>

@@ -35,16 +35,41 @@ export async function getSetupIntent(id: string): Promise<SetupIntent> {
   return whopApi<SetupIntent>(`/setup_intents/${encodeURIComponent(id)}`)
 }
 
+/**
+ * The setup intent normally names the member the card was saved for. If it
+ * doesn't, look the member up by the email the homeowner gave us.
+ */
+async function findMemberId(intent: SetupIntent): Promise<string | undefined> {
+  const email = typeof intent.metadata?.email === 'string' ? intent.metadata.email : ''
+  if (!email) return undefined
+  try {
+    const members = await whopApi<{ data?: Array<{ id: string }> }>('/members', {
+      query: { account_id: accountId(), query: email, first: 1 },
+    })
+    return members.data?.[0]?.id
+  } catch {
+    return undefined
+  }
+}
+
 /** Charges the deposit plan to the card saved by a succeeded setup intent. */
 export async function chargeDeposit(intent: SetupIntent, origin: string) {
   const plan = site.plans.deposit
   if (!plan.whopPlanId) {
     throw new WhopApiError('The deposit plan isn’t set up yet. Add its plan ID to src/config/site.ts.', 503, null)
   }
-  const memberId = intent.member?.id
+  const memberId = intent.member?.id ?? (await findMemberId(intent))
   const paymentMethodId = savedMethodId(intent)
-  if (intent.status !== 'succeeded' || !memberId || !paymentMethodId) {
+  if (intent.status !== 'succeeded' || !paymentMethodId) {
     throw new WhopApiError('Your card wasn’t saved yet, so the deposit wasn’t charged. Please try again.', 409, null)
+  }
+  if (!memberId) {
+    console.error('[deposit] card saved but no member found', intent.id, JSON.stringify({ member: intent.member ?? null }))
+    throw new WhopApiError(
+      'Your card is saved, but the deposit couldn’t be charged automatically. We’ll call you to finish booking — you haven’t been charged.',
+      409,
+      null,
+    )
   }
 
   const jobRef = typeof intent.metadata?.job_ref === 'string' ? intent.metadata.job_ref : ''

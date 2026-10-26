@@ -106,6 +106,7 @@ export function DepositCheckout() {
         confirmationToken,
         jobRef,
         name: customer.name,
+        email: customer.email,
         phone: customer.phone,
         address: fullAddress(customer),
         zip: customer.zip,
