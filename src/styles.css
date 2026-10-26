@@ -421,10 +421,11 @@
     background:
       linear-gradient(var(--rr-raised), var(--rr-surface)) padding-box,
       conic-gradient(from var(--spin), var(--rr-accent), var(--rr-accent2), transparent 35%, transparent 65%, var(--rr-accent)) border-box;
-    animation: spin 6s linear infinite;
+    animation: rr-glow-spin 6s linear infinite;
   }
 
-  @keyframes spin {
+  /* Own name on purpose: Tailwind's animate-spin defines @keyframes spin (a rotate). */
+  @keyframes rr-glow-spin {
     to {
       --spin: 360deg;
     }
