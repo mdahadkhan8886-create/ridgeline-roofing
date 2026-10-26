@@ -54,7 +54,7 @@ export function Hero() {
     <section className="shingle-texture relative overflow-hidden" aria-labelledby="hero-title">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-12 sm:px-6 md:pt-16 lg:grid-cols-[1.15fr_1fr] lg:pb-20">
         <div>
-          <h1 id="hero-title" className="display m-0 text-[clamp(2.6rem,7vw,5.2rem)] text-ink">
+          <h1 id="hero-title" className="display m-0 text-[clamp(2.5rem,6vw,4.4rem)] text-ink">
             {site.company.tagline}
           </h1>
           <p className="measure mt-6 text-[1.15rem] text-muted">{site.company.intro}</p>

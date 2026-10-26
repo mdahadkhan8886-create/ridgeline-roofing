@@ -13,7 +13,7 @@ export interface Customer {
 export const emptyCustomer: Customer = { name: '', email: '', phone: '', line1: '', city: '', state: 'TX', zip: '' }
 
 export function customerProblem(c: Customer): string | null {
-  if (!c.name.trim()) return 'Add the name on the card.'
+  if (!c.name.trim()) return 'Add your name so the crew knows who to ask for.'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())) return 'Add a valid email for your receipt.'
   if (!c.line1.trim() || !c.city.trim()) return 'Add the property address.'
   if (!/^[A-Za-z]{2}$/.test(c.state.trim())) return 'Use the 2-letter state code, like TX.'
@@ -21,18 +21,15 @@ export function customerProblem(c: Customer): string | null {
   return null
 }
 
+/**
+ * Whop's PaymentElement collects the cardholder name and billing address itself,
+ * so only the contact details go into the confirmation token here. The property
+ * address (where the work happens) is sent to our server as order metadata.
+ */
 export function toBillingDetails(c: Customer): BillingDetails {
   return {
-    name: c.name.trim(),
     email: c.email.trim(),
     phone: c.phone.trim() || undefined,
-    address: {
-      line1: c.line1.trim(),
-      city: c.city.trim(),
-      state: c.state.trim().toUpperCase(),
-      postal_code: c.zip.trim(),
-      country: 'US',
-    },
   }
 }
 
@@ -54,6 +51,7 @@ export function CustomerFields({
   return (
     <fieldset disabled={disabled} className="m-0 grid gap-4 border-0 p-0">
       <legend className="heading mb-1 p-0 text-[1.15rem]">Your details</legend>
+      <p className="m-0 -mt-1 text-sm text-muted">Card billing details are collected in the secure payment form below.</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="field">
           Full name
@@ -69,7 +67,7 @@ export function CustomerFields({
         <input value={value.email} onChange={set('email')} type="email" autoComplete="email" required />
       </label>
       <label className="field">
-        Property address
+        Property address (where the work is)
         <input value={value.line1} onChange={set('line1')} autoComplete="address-line1" required />
       </label>
       <div className="grid grid-cols-[1.4fr_0.6fr_0.9fr] gap-3">

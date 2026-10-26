@@ -31,9 +31,9 @@ export interface CheckoutHandle {
 
 export interface BillingDetails {
   email: string
-  name: string
+  name?: string
   phone?: string
-  address: {
+  address?: {
     line1: string
     line2?: string
     city: string
