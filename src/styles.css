@@ -1,8 +1,51 @@
-
 @import "tailwindcss";
+
+/*
+ * Brand colors come from src/config/site.ts (set as --rr-* on <html>),
+ * so re-branding never touches this file.
+ */
+@theme inline {
+  --color-paper: var(--rr-sky);
+  --color-ink: var(--rr-slate);
+  --color-muted: var(--rr-shingle);
+  --color-rule: var(--rr-flashing);
+  --color-hivis: var(--rr-accent);
+  --color-hivis-ink: var(--rr-accent-ink);
+  --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  --rr-sky: #e9f0f3;
+  --rr-slate: #1e2b32;
+  --rr-shingle: #4a5a63;
+  --rr-flashing: #a9bcc5;
+  --rr-accent: #f4c430;
+  --rr-accent-ink: #1e2b32;
+  /* 6-in-12 roof pitch, used for the sloped section edges. */
+  --pitch: 26.565deg;
+  color-scheme: light;
+}
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 html,
@@ -13,5 +56,166 @@ body,
 
 body {
   margin: 0;
+  background: var(--rr-sky);
+  color: var(--rr-slate);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+/* Wide, heavy Archivo — the lettering on the side of a contractor's truck. */
+.display {
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.012em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.heading {
+  font-stretch: 112%;
+  font-weight: 750;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.measure {
+  max-width: 62ch;
+}
+
+:focus-visible {
+  outline: 3px solid var(--rr-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--rr-accent);
+}
+
+/* Slate bands get a roof-pitched top edge. */
+.pitched {
+  --rise: clamp(28px, 6vw, 72px);
+  clip-path: polygon(0 var(--rise), 50% 0, 100% var(--rise), 100% 100%, 0 100%);
+  padding-top: calc(var(--rise) + 3.5rem);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-stretch: 108%;
+  line-height: 1.1;
+  text-decoration: none;
+  transition: background-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--rr-accent);
+  color: var(--rr-accent-ink);
+  box-shadow: 0 2px 0 0 color-mix(in oklab, var(--rr-accent) 55%, black);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--rr-accent) 88%, white);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 0 color-mix(in oklab, var(--rr-accent) 55%, black);
+}
+
+.btn-ghost {
+  border-color: currentColor;
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  background: color-mix(in oklab, currentColor 8%, transparent);
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.65rem 0.8rem;
+  border: 1.5px solid var(--rr-flashing);
+  border-radius: 4px;
+  background: white;
+  color: var(--rr-slate);
+  font: inherit;
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.field textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--rr-slate);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--rr-accent) 60%, transparent);
+}
+
+.field .hint {
+  font-weight: 400;
+  color: var(--rr-shingle);
+  font-size: 0.85rem;
+}
+
+/* Subtle shingle courses behind the hero. */
+.shingle-texture {
+  background-image:
+    linear-gradient(to bottom, transparent 0 21px, color-mix(in oklab, var(--rr-flashing) 45%, transparent) 21px 22px),
+    linear-gradient(to right, transparent 0 41px, color-mix(in oklab, var(--rr-flashing) 30%, transparent) 41px 42px);
+  background-size: 100% 22px, 84px 44px;
+}
+
+.hero-draw path,
+.hero-draw line,
+.hero-draw polyline {
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  animation: draw 1.6s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+}
+
+.hero-draw .late {
+  animation-delay: 0.7s;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.whop-slot:empty {
+  min-height: 0;
+}
