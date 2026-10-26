@@ -51,7 +51,7 @@ export function CustomerFields({
   return (
     <fieldset disabled={disabled} className="m-0 grid gap-4 border-0 p-0">
       <legend className="heading mb-1 p-0 text-[1.15rem]">Your details</legend>
-      <p className="m-0 -mt-1 text-sm text-muted">Card billing details are collected in the secure payment form below.</p>
+      <p className="m-0 -mt-1 text-sm text-dim">Card billing details are collected in the secure payment form below.</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="field">
           Full name

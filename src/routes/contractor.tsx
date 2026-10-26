@@ -33,6 +33,88 @@ interface CardRow {
   jobRef: string
 }
 
+type Stage = 'lead' | 'booked' | 'deposit' | 'invoiced' | 'paid'
+
+interface Job {
+  key: string
+  name: string
+  email: string
+  address: string
+  stage: Stage
+  updatedAt: string | null
+  steps: Partial<Record<Stage, { at: string | null; detail: string }>>
+}
+
+interface InvoiceRow {
+  id: string
+  number: string | number | null
+  status: string | null
+  email: string
+  name: string
+  amount: string
+  createdAt: string | null
+  dueDate: string | null
+}
+
+const STAGES: { id: Stage; title: string; hint: string }[] = [
+  { id: 'lead', title: 'Estimate requested', hint: 'Leads API' },
+  { id: 'booked', title: 'Inspection paid', hint: 'Payments' },
+  { id: 'deposit', title: 'Deposit + card on file', hint: 'Setup intent' },
+  { id: 'invoiced', title: 'Final invoice sent', hint: 'Invoices API' },
+  { id: 'paid', title: 'Paid in full', hint: 'Invoice paid' },
+]
+
+function Pipeline({ jobs }: { jobs: Job[] }) {
+  return (
+    <section aria-labelledby="pipeline-title" className="mt-10">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="pipeline-title" className="heading m-0 text-[1.5rem] text-fg">
+            Jobs pipeline
+          </h2>
+          <p className="mt-1 text-sm text-dim">Every customer’s path from estimate to final payment, read live from Whop.</p>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 overflow-x-auto pb-2 md:grid-cols-[repeat(5,minmax(14rem,1fr))]">
+        {STAGES.map((stage, i) => {
+          const items = jobs.filter((j) => j.stage === stage.id)
+          return (
+            <div key={stage.id} className="card flex flex-col p-3">
+              <div className="flex items-center justify-between gap-2 px-1 pb-3">
+                <span className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber text-xs font-bold text-on-amber">{i + 1}</span>
+                  <span className="text-[0.95rem] font-semibold text-fg">{stage.title}</span>
+                </span>
+                <span className="rounded-full bg-raised px-2 py-0.5 text-xs font-semibold text-dim">{items.length}</span>
+              </div>
+              <div className="grid gap-2">
+                {items.length === 0 && <p className="m-0 rounded-lg border border-dashed border-line px-3 py-4 text-center text-xs text-dim">{stage.hint}</p>}
+                {items.map((job) => (
+                  <article key={job.key} className="rounded-lg border border-line bg-night/60 p-3">
+                    <p className="m-0 font-semibold text-fg">{job.name || job.email || 'Customer'}</p>
+                    {job.name && job.email && <p className="m-0 text-xs text-dim">{job.email}</p>}
+                    <ol className="m-0 mt-2 grid list-none gap-1 p-0">
+                      {STAGES.filter((s) => job.steps[s.id]).map((s) => (
+                        <li key={s.id} className="flex gap-2 text-xs text-fg/85">
+                          <span aria-hidden="true" className="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-amber" />
+                          <span>
+                            {job.steps[s.id]!.detail}
+                            {job.steps[s.id]!.at && <span className="block text-dim">{when(job.steps[s.id]!.at)}</span>}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 interface InvoiceResult {
   id: string
   number: string | number | null
@@ -54,6 +136,9 @@ function ContractorPage() {
   const [pin, setPin] = useState<string | null>(null)
   const [leads, setLeads] = useState<LeadRow[]>([])
   const [cards, setCards] = useState<CardRow[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([])
+  const [warnings, setWarnings] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -70,7 +155,14 @@ function ContractorPage() {
     setError(null)
     try {
       const response = await fetch('/api/admin/overview', { headers: { 'x-admin-pin': currentPin } })
-      const data = (await response.json().catch(() => ({}))) as { leads?: LeadRow[]; cardsOnFile?: CardRow[]; error?: string }
+      const data = (await response.json().catch(() => ({}))) as {
+        leads?: LeadRow[]
+        cardsOnFile?: CardRow[]
+        pipeline?: Job[]
+        invoices?: InvoiceRow[]
+        warnings?: string[]
+        error?: string
+      }
       if (response.status === 401) {
         try {
           window.sessionStorage.removeItem(PIN_KEY)
@@ -83,6 +175,9 @@ function ContractorPage() {
       if (!response.ok) throw new Error(data.error || 'Couldn’t load the console.')
       setLeads(data.leads ?? [])
       setCards(data.cardsOnFile ?? [])
+      setJobs(data.pipeline ?? [])
+      setInvoices(data.invoices ?? [])
+      setWarnings(data.warnings ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Couldn’t load the console.')
     } finally {
@@ -110,29 +205,82 @@ function ContractorPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display m-0 text-[clamp(2rem,4.5vw,3rem)]">Contractor console</h1>
-          <p className="mt-2 text-muted">Estimate requests, cards on file, and final-balance invoices — all through Whop.</p>
+          <p className="mt-2 text-dim">Estimate requests, cards on file, and final-balance invoices — all through Whop.</p>
         </div>
-        <button type="button" className="btn btn-ghost text-ink" onClick={() => void load(pin)} disabled={loading}>
+        <button type="button" className="btn btn-ghost" onClick={() => void load(pin)} disabled={loading}>
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 
       {error && (
-        <p role="alert" className="mt-6 rounded border-l-4 border-ink bg-hivis/25 px-4 py-3 font-semibold">
+        <p role="alert" className="mt-6 rounded-lg border border-copper/50 bg-copper/10 px-4 py-3 font-semibold text-fg">
           {error}
         </p>
       )}
 
-      <InvoiceBuilder pin={pin} cards={cards} />
+      {warnings.length > 0 && <p className="mt-4 text-sm text-dim">{warnings.join(' ')}</p>}
+
+      <Pipeline jobs={jobs} />
+
+      <InvoiceBuilder pin={pin} cards={cards} onCreated={() => void load(pin)} />
+
+      <section aria-labelledby="invoices-title" className="mt-14">
+        <h2 id="invoices-title" className="heading m-0 text-[1.5rem]">
+          Final invoices <span className="text-base font-semibold text-dim">({invoices.length})</span>
+        </h2>
+        <p className="mt-1 text-sm text-dim">Created with the Whop Invoices API.</p>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-[0.95rem]">
+            <thead className="bg-raised">
+              <tr>
+                {['Invoice', 'Customer', 'Amount', 'Status', 'Created'].map((h) => (
+                  <th key={h} scope="col" className="px-4 py-3 font-semibold">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-dim">
+                    No invoices yet. Create one above when a job is finished.
+                  </td>
+                </tr>
+              )}
+              {invoices.map((inv) => (
+                <tr key={inv.id} className="border-t border-line align-top">
+                  <td className="px-4 py-3 font-semibold">{inv.number ? `#${inv.number}` : inv.id}</td>
+                  <td className="px-4 py-3">
+                    <div>{inv.name || '—'}</div>
+                    <div className="text-sm text-dim">{inv.email}</div>
+                  </td>
+                  <td className="px-4 py-3">{inv.amount}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        inv.status === 'paid' ? 'bg-amber text-on-amber' : 'bg-raised text-fg ring-1 ring-line'
+                      }`}
+                    >
+                      {inv.status ?? '—'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">{when(inv.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section aria-labelledby="cards-title" className="mt-14">
         <h2 id="cards-title" className="heading m-0 text-[1.5rem]">
-          Cards on file <span className="text-base font-semibold text-muted">({cards.length})</span>
+          Cards on file <span className="text-base font-semibold text-dim">({cards.length})</span>
         </h2>
-        <p className="mt-1 text-sm text-muted">Saved with Whop setup intents when a customer pays a deposit.</p>
-        <div className="mt-4 overflow-x-auto rounded-md border border-rule bg-white">
+        <p className="mt-1 text-sm text-dim">Saved with Whop setup intents when a customer pays a deposit.</p>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface">
           <table className="w-full min-w-[44rem] border-collapse text-left text-[0.95rem]">
-            <thead className="bg-paper">
+            <thead className="bg-raised">
               <tr>
                 {['Customer', 'Card', 'Property', 'Saved', 'Setup intent'].map((h) => (
                   <th key={h} scope="col" className="px-4 py-3 font-semibold">
@@ -144,21 +292,21 @@ function ContractorPage() {
             <tbody>
               {cards.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-muted">
+                  <td colSpan={5} className="px-4 py-6 text-dim">
                     No cards on file yet. They appear here after a customer pays a deposit on the site.
                   </td>
                 </tr>
               )}
               {cards.map((c) => (
-                <tr key={c.setupIntentId} className="border-t border-rule/70 align-top">
+                <tr key={c.setupIntentId} className="border-t border-line align-top">
                   <td className="px-4 py-3">
                     <div className="font-semibold">{c.name || '—'}</div>
-                    <div className="text-sm text-muted">{c.email}</div>
+                    <div className="text-sm text-dim">{c.email}</div>
                   </td>
                   <td className="px-4 py-3">{c.card}</td>
                   <td className="px-4 py-3">{c.address}</td>
                   <td className="px-4 py-3 text-sm">{when(c.createdAt)}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted">{c.setupIntentId}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-dim">{c.setupIntentId}</td>
                 </tr>
               ))}
             </tbody>
@@ -168,12 +316,12 @@ function ContractorPage() {
 
       <section aria-labelledby="leads-title" className="mt-14">
         <h2 id="leads-title" className="heading m-0 text-[1.5rem]">
-          Estimate requests <span className="text-base font-semibold text-muted">({leads.length})</span>
+          Estimate requests <span className="text-base font-semibold text-dim">({leads.length})</span>
         </h2>
-        <p className="mt-1 text-sm text-muted">Every “Request an estimate” form lands here as a Whop lead.</p>
-        <div className="mt-4 overflow-x-auto rounded-md border border-rule bg-white">
+        <p className="mt-1 text-sm text-dim">Every “Request an estimate” form lands here as a Whop lead.</p>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface">
           <table className="w-full min-w-[52rem] border-collapse text-left text-[0.95rem]">
-            <thead className="bg-paper">
+            <thead className="bg-raised">
               <tr>
                 {['Received', 'Contact', 'Property', 'Needs', 'Notes', 'Lead'].map((h) => (
                   <th key={h} scope="col" className="px-4 py-3 font-semibold">
@@ -185,25 +333,25 @@ function ContractorPage() {
             <tbody>
               {leads.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-muted">
+                  <td colSpan={6} className="px-4 py-6 text-dim">
                     No estimate requests yet. Submit the form on the homepage to see one arrive.
                   </td>
                 </tr>
               )}
               {leads.map((l) => (
-                <tr key={l.id} className="border-t border-rule/70 align-top">
+                <tr key={l.id} className="border-t border-line align-top">
                   <td className="px-4 py-3 text-sm">{when(l.createdAt)}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold">{l.name || '—'}</div>
-                    <div className="text-sm text-muted">{[l.email, l.phone].filter(Boolean).join(' / ')}</div>
+                    <div className="text-sm text-dim">{[l.email, l.phone].filter(Boolean).join(' / ')}</div>
                   </td>
                   <td className="px-4 py-3">{l.address}</td>
                   <td className="px-4 py-3">
                     {l.service}
-                    <div className="text-sm text-muted">{l.timeline}</div>
+                    <div className="text-sm text-dim">{l.timeline}</div>
                   </td>
                   <td className="max-w-[18rem] px-4 py-3 text-sm">{l.message}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted">{l.id}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-dim">{l.id}</td>
                 </tr>
               ))}
             </tbody>
@@ -219,7 +367,7 @@ function PinGate({ onSubmit, error }: { onSubmit: (pin: string) => void; error: 
   return (
     <div className="mx-auto max-w-md px-4 py-24 sm:px-6">
       <h1 className="display text-[2.4rem]">Contractor console</h1>
-      <p className="mt-3 text-muted">For {site.company.name} staff. Enter the console PIN.</p>
+      <p className="mt-3 text-dim">For {site.company.name} staff. Enter the console PIN.</p>
       <form
         className="mt-6 grid gap-4"
         onSubmit={(e) => {
@@ -240,7 +388,7 @@ function PinGate({ onSubmit, error }: { onSubmit: (pin: string) => void; error: 
   )
 }
 
-function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
+function InvoiceBuilder({ pin, cards, onCreated }: { pin: string; cards: CardRow[]; onCreated?: () => void }) {
   const [selected, setSelected] = useState('')
   const [collection, setCollection] = useState<'charge_automatically' | 'send_invoice'>('charge_automatically')
   const [jobTotal, setJobTotal] = useState('12400')
@@ -288,6 +436,7 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
       const data = (await response.json().catch(() => ({}))) as InvoiceResult & { error?: string }
       if (!response.ok) throw new Error(data.error || 'The invoice wasn’t created.')
       setResult(data)
+      onCreated?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The invoice wasn’t created.')
     } finally {
@@ -296,11 +445,11 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
   }
 
   return (
-    <section aria-labelledby="invoice-title" className="mt-10 rounded-md border-2 border-ink bg-white p-6 sm:p-8">
+    <section aria-labelledby="invoice-title" className="mt-10 card-raised p-6 sm:p-8">
       <h2 id="invoice-title" className="heading m-0 text-[1.6rem]">
         Bill the final balance
       </h2>
-      <p className="measure mt-2 text-muted">
+      <p className="measure mt-2 text-dim">
         When the job is finished, create the final invoice with the Whop Invoices API. Charge the card saved at deposit time, or email the
         customer a pay-online link.
       </p>
@@ -364,7 +513,7 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
               />
               <span>
                 <strong>Charge the card on file</strong>
-                <span className="block text-sm text-muted">Bills {card ? card.card : 'the saved card'} automatically.</span>
+                <span className="block text-sm text-dim">Bills {card ? card.card : 'the saved card'} automatically.</span>
               </span>
             </label>
             <label className="flex items-start gap-3">
@@ -377,13 +526,13 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
               />
               <span>
                 <strong>Email an invoice</strong>
-                <span className="block text-sm text-muted">The customer pays online with any method, including financing where offered.</span>
+                <span className="block text-sm text-dim">The customer pays online with any method, including financing where offered.</span>
               </span>
             </label>
           </fieldset>
         </div>
 
-        <div className="rounded-md bg-paper p-5">
+        <div className="rounded-md bg-raised p-5">
           <h3 className="heading m-0 text-[1.15rem]">Invoice preview</h3>
           <table className="mt-4 w-full border-collapse text-[0.98rem]">
             <tbody>
@@ -397,7 +546,7 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
                   <td className="py-1.5 text-right">−{formatUSD(deposit)}</td>
                 </tr>
               )}
-              <tr className="border-t-2 border-ink">
+              <tr className="border-t border-amber/60">
                 <th scope="row" className="py-2 pr-3 text-left">
                   Balance due
                 </th>
@@ -407,7 +556,7 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
           </table>
 
           {error && (
-            <p role="alert" className="mt-4 rounded border-l-4 border-ink bg-hivis/25 px-3 py-2 text-[0.95rem] font-semibold">
+            <p role="alert" className="mt-4 rounded-lg border border-copper/50 bg-copper/10 px-3 py-2 text-fg text-[0.95rem] font-semibold">
               {error}
             </p>
           )}
@@ -421,22 +570,22 @@ function InvoiceBuilder({ pin, cards }: { pin: string; cards: CardRow[] }) {
           </button>
 
           {result && (
-            <div role="status" className="mt-5 border-t border-rule pt-4 text-[0.95rem]">
+            <div role="status" className="mt-5 border-t border-line pt-4 text-[0.95rem]">
               <p className="m-0 font-bold">
                 Invoice {result.number ? `#${result.number}` : result.id} created
                 {result.status ? ` — ${result.status}` : ''}
               </p>
-              <p className="mt-1 text-muted">
+              <p className="mt-1 text-dim">
                 {result.collection === 'charge_automatically'
                   ? `Whop is charging ${formatUSD(result.balance)} to the card on file.`
                   : `Whop emailed the customer a ${formatUSD(result.balance)} invoice.`}
               </p>
               {result.payUrl && (
-                <a href={result.payUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block font-semibold text-ink">
+                <a href={result.payUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block font-semibold text-fg">
                   Open the pay-online page
                 </a>
               )}
-              <p className="mt-1 font-mono text-xs text-muted">{result.id}</p>
+              <p className="mt-1 font-mono text-xs text-dim">{result.id}</p>
             </div>
           )}
         </div>

@@ -77,7 +77,7 @@ function ReturnPage() {
       {face === 'checking' && (
         <div role="status">
           <h1 className="display text-[clamp(2rem,5vw,3rem)]">Finishing your deposit…</h1>
-          <p className="mt-4 text-muted">Your card is saved. Charging the deposit now — don’t close this tab.</p>
+          <p className="mt-4 text-dim">Your card is saved. Charging the deposit now — don’t close this tab.</p>
         </div>
       )}
 
@@ -86,12 +86,12 @@ function ReturnPage() {
           <h1 className="display text-[clamp(2.2rem,5vw,3.4rem)]">
             {isDeposit ? 'Your install date is reserved' : 'You’re booked'}
           </h1>
-          <p className="measure mt-5 text-[1.12rem] text-ink/85">
+          <p className="measure mt-5 text-[1.12rem] text-dim">
             {isDeposit
               ? `We received your ${formatUSD(site.plans.deposit.price)} deposit and your card is saved securely with Whop. We’ll call within one business day to confirm the date. The final balance is billed only after the job is done, on an itemized invoice.`
               : `Payment received${plan ? ` for ${plan.name.toLowerCase()} (${formatUSD(plan.price)})` : ''}. A receipt is on its way to your email, and we’ll call within one business day to pick a time.`}
           </p>
-          {paymentId && <p className="mt-4 text-sm text-muted">Payment reference: {paymentId}</p>}
+          {paymentId && <p className="mt-4 text-sm text-dim">Payment reference: {paymentId}</p>}
           <Link to="/" className="btn btn-primary mt-8">
             Back to the homepage
           </Link>
@@ -101,11 +101,11 @@ function ReturnPage() {
       {face === 'pending' && (
         <div role="status">
           <h1 className="display text-[clamp(2rem,5vw,3rem)]">We’re confirming your payment</h1>
-          <p className="measure mt-5 text-[1.1rem] text-ink/85">
+          <p className="measure mt-5 text-[1.1rem] text-dim">
             Your bank is still processing it. We’ll email you as soon as it clears — there’s nothing else you need to do.
           </p>
-          {paymentId && <p className="mt-4 text-sm text-muted">Payment reference: {paymentId}</p>}
-          <Link to="/" className="btn btn-ghost mt-8 text-ink">
+          {paymentId && <p className="mt-4 text-sm text-dim">Payment reference: {paymentId}</p>}
+          <Link to="/" className="btn btn-ghost mt-8">
             Back to the homepage
           </Link>
         </div>
@@ -114,7 +114,7 @@ function ReturnPage() {
       {face === 'failed' && (
         <div role="alert">
           <h1 className="display text-[clamp(2rem,5vw,3rem)]">Your payment didn’t go through</h1>
-          <p className="measure mt-5 text-[1.1rem] text-ink/85">
+          <p className="measure mt-5 text-[1.1rem] text-dim">
             {message ?? 'No money was taken. You can try again with the same card or a different one.'}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -127,7 +127,7 @@ function ReturnPage() {
                 Try again
               </Link>
             ) : null}
-            <a href={site.company.phoneHref} className="btn btn-ghost text-ink">
+            <a href={site.company.phoneHref} className="btn btn-ghost">
               Call {site.company.phone}
             </a>
           </div>

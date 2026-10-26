@@ -83,9 +83,9 @@ export function PlanCheckout({ plan }: { plan: Plan }) {
 
   if (!plan.whopPlanId) {
     return (
-      <div className="rounded-md border-2 border-ink bg-white p-6">
+      <div className="card-raised p-6">
         <h2 className="heading m-0 text-xl">Online booking isn’t switched on yet</h2>
-        <p className="mt-2 text-ink/85">
+        <p className="mt-2 text-dim">
           The owner still needs to add this plan’s Whop ID to the site config. Call us and we’ll book you in.
         </p>
       </div>
@@ -95,17 +95,17 @@ export function PlanCheckout({ plan }: { plan: Plan }) {
   const unavailable = !accountLoading && !accountId
 
   return (
-    <div className="grid gap-6 rounded-md border-2 border-ink bg-white p-5 sm:p-7">
+    <div className="grid gap-6 card-raised p-5 sm:p-7">
       <div>
         <h2 className="heading m-0 text-[1.3rem]">Pay {formatUSD(plan.price)}</h2>
         <div ref={expressRef} className="whop-slot mt-4" />
-        <p className="mt-2 text-sm text-muted">Apple Pay and Google Pay appear above on devices that support them.</p>
+        <p className="mt-2 text-sm text-dim">Apple Pay and Google Pay appear above on devices that support them.</p>
       </div>
 
-      <div className="flex items-center gap-3 text-sm text-muted" aria-hidden="true">
-        <span className="h-px flex-1 bg-rule" />
+      <div className="flex items-center gap-3 text-sm text-dim" aria-hidden="true">
+        <span className="h-px flex-1 bg-line" />
         or pay by card
-        <span className="h-px flex-1 bg-rule" />
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <CustomerFields value={customer} onChange={setCustomer} disabled={busy} />
@@ -113,10 +113,10 @@ export function PlanCheckout({ plan }: { plan: Plan }) {
       <div>
         <h3 className="heading m-0 mb-3 text-[1.15rem]">Payment</h3>
         {unavailable ? (
-          <p className="text-ink/85">Online payment is unavailable right now. Please call us to book.</p>
+          <p className="text-dim">Online payment is unavailable right now. Please call us to book.</p>
         ) : (
           <>
-            {(loading || accountLoading) && !loadError && <p className="text-sm text-muted">Loading secure payment form…</p>}
+            {(loading || accountLoading) && !loadError && <p className="text-sm text-dim">Loading secure payment form…</p>}
             <div ref={paymentRef} className="whop-slot" />
             <div ref={brandingRef} className="whop-slot mt-3" />
           </>
@@ -125,7 +125,7 @@ export function PlanCheckout({ plan }: { plan: Plan }) {
       </div>
 
       {error && (
-        <p role="alert" className="m-0 rounded border-l-4 border-ink bg-hivis/25 px-4 py-3 font-semibold">
+        <p role="alert" className="m-0 rounded-lg border border-copper/50 bg-copper/10 px-4 py-3 font-semibold text-fg">
           {error}
         </p>
       )}
@@ -133,7 +133,7 @@ export function PlanCheckout({ plan }: { plan: Plan }) {
       <button type="button" onClick={pay} disabled={busy || !ready || !complete} className="btn btn-primary w-full text-[1.1rem]">
         {busy ? 'Processing…' : `Pay ${formatUSD(plan.price)}`}
       </button>
-      <p className="-mt-3 text-center text-sm text-muted">Payments are processed by Whop. We never see your card number.</p>
+      <p className="-mt-3 text-center text-sm text-dim">Payments are processed by Whop. We never see your card number.</p>
     </div>
   )
 }

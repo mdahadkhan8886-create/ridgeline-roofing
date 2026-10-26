@@ -6,7 +6,9 @@
  *      src/config/site.ts;
  *   2. turns on "Sign in with Whop" for this app (public OAuth client + the
  *      /estimate/verified return address on every domain), which the estimate
- *      form uses to confirm the homeowner's email before creating the lead.
+ *      form uses to confirm the homeowner's email before creating the lead;
+ *   3. registers the Whop webhook (payments, saved cards, invoices) and stores
+ *      its signing secret as the WHOP_WEBHOOK_SECRET app secret.
  *
  *   node scripts/setup-whop.mjs
  *
@@ -14,7 +16,7 @@
  * Safe to re-run: anything that already has an ID in the config is skipped.
  */
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -114,5 +116,34 @@ const redirectUris = [...[...hosts].map((h) => `https://${h}/estimate/verified`)
 console.log('Turning on "Sign in with Whop" for estimate requests…')
 whopJson(['apps', 'update', appId, '--oauth_client_type', 'public', '--redirect_uris', JSON.stringify(redirectUris)])
 for (const uri of redirectUris) console.log(`  return URL  ${uri}`)
+
+// 4. Webhook: payment, saved-card and invoice events → /api/webhooks/whop
+// A small marker file stops re-runs from registering the same webhook twice.
+const webhookMarker = path.join(root, '.whop-webhook.json')
+const secrets = app.secrets ?? {}
+if (secrets.WHOP_WEBHOOK_SECRET || existsSync(webhookMarker)) {
+  console.log('  webhook     already set up')
+} else {
+  const host = app.base_url ? new URL(app.base_url).host : [...hosts][0]
+  if (!host) throw new Error('The app has no domain yet. Deploy once, then re-run this script.')
+  const url = `https://${host}/api/webhooks/whop`
+  const events = ['payment.succeeded', 'payment.failed', 'setup_intent.succeeded', 'invoice.created', 'invoice.paid', 'invoice.past_due']
+  console.log('Creating the Whop webhook…')
+  const { out, data } = whopJson(['webhooks', 'create', '--url', url, '--events', JSON.stringify(events)])
+  const secret =
+    data?.webhook_secret ?? data?.data?.webhook_secret ?? out.match(/"webhook_secret"\s*:\s*"([^"]+)"/)?.[1]
+  if (!secret) {
+    console.error(out)
+    throw new Error('Couldn’t read the webhook secret. Create the webhook in the dashboard and run: whop apps secrets set --secret WHOP_WEBHOOK_SECRET=ws_…')
+  }
+  execFileSync('whop', ['apps', 'secrets', 'set', '--secret', `WHOP_WEBHOOK_SECRET=${secret}`], {
+    cwd: root,
+    stdio: ['ignore', 'ignore', 'inherit'],
+    shell: process.platform === 'win32',
+  })
+  const webhookId = data?.id ?? data?.data?.id ?? out.match(/"id"\s*:\s*"([a-z]+_[A-Za-z0-9]+)"/)?.[1] ?? null
+  writeFileSync(webhookMarker, JSON.stringify({ id: webhookId, url, events }, null, 2) + '\n')
+  console.log(`  webhook     ${url}`)
+}
 
 console.log('\nDone. IDs saved to src/config/site.ts. Next: whop apps deploy')

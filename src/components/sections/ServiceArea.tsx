@@ -1,6 +1,27 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { site } from '#/config/site'
+import { Reveal } from '#/components/Reveal'
+
+function TownTicker() {
+  const towns = site.serviceArea.towns
+  // Two copies side by side so the loop is seamless.
+  const row = [...towns, ...towns]
+  return (
+    <div className="fade-edges overflow-hidden border-y border-line py-5" aria-hidden="true">
+      <div className="marquee gap-10">
+        {row.map((town, i) => (
+          <span key={`${town}-${i}`} className="display flex items-center gap-10 whitespace-nowrap text-[clamp(1.6rem,3vw,2.4rem)] text-fg/80">
+            {town}
+            <svg viewBox="0 0 24 24" className="h-5 w-5 text-amber">
+              <path d="M2 16 L12 7 L22 16" stroke="currentColor" strokeWidth="3" fill="none" />
+            </svg>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function ServiceArea() {
   const [zip, setZip] = useState('')
@@ -14,20 +35,32 @@ export function ServiceArea() {
   }
 
   return (
-    <section id="service-area" aria-labelledby="area-title" className="bg-paper">
-      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-18 sm:px-6 md:grid-cols-[1fr_1.1fr] md:py-24">
-        <div>
-          <h2 id="area-title" className="display m-0 text-[clamp(2rem,4.5vw,3.2rem)]">
+    <section id="service-area" aria-labelledby="area-title" className="bg-night">
+      <div className="pt-20 md:pt-28">
+        <TownTicker />
+      </div>
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.1fr_1fr] md:items-start md:pb-28">
+        <Reveal>
+          <h2 id="area-title" className="display m-0 text-[clamp(2.1rem,4.6vw,3.4rem)] text-fg">
             {site.serviceArea.title}
           </h2>
-          <p className="measure mt-4 text-[1.08rem] text-muted">{site.serviceArea.text}</p>
+          <p className="measure mt-4 text-[1.08rem] text-dim">{site.serviceArea.text}</p>
+          <ul className="mt-8 flex list-none flex-wrap gap-2 p-0">
+            {site.serviceArea.towns.map((town) => (
+              <li key={town} className="rounded-full border border-line bg-surface px-3.5 py-1.5 text-[0.95rem] text-fg/90">
+                {town}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
 
-          <form onSubmit={check} className="mt-8 max-w-md" noValidate>
-            <label htmlFor="zip-check" className="field">
-              Check your ZIP code
-            </label>
-            <div className="mt-2 flex gap-2">
-              <div className="field flex-1">
+        <Reveal delay={120}>
+          <form onSubmit={check} className="card-raised p-7" noValidate>
+            <h3 className="heading m-0 text-[1.35rem] text-fg">Is your home in our area?</h3>
+            <p className="mt-2 text-dim">Enter the property’s ZIP code.</p>
+            <div className="mt-5 flex gap-2">
+              <label className="field flex-1" htmlFor="zip-check">
+                <span className="sr-only">ZIP code</span>
                 <input
                   id="zip-check"
                   inputMode="numeric"
@@ -40,37 +73,26 @@ export function ServiceArea() {
                     setResult(null)
                   }}
                 />
-              </div>
+              </label>
               <button type="submit" className="btn btn-primary">
                 Check
               </button>
             </div>
-            <p role="status" aria-live="polite" className="mt-3 min-h-[1.6em] font-semibold">
-              {result === 'in' && `Yes — ${zip} is in our regular service area.`}
+            <p role="status" aria-live="polite" className="mb-0 mt-4 min-h-[1.6em] font-semibold">
+              {result === 'in' && <span className="text-amber">Yes — {zip} is in our regular service area.</span>}
               {result === 'out' && (
-                <>
+                <span className="text-fg">
                   {zip} is outside our usual area.{' '}
-                  <a href="#estimate" className="text-ink">
+                  <a href="#estimate" className="text-amber">
                     Send an estimate request
                   </a>{' '}
                   and we’ll tell you if we can travel.
-                </>
+                </span>
               )}
-              {result === 'invalid' && 'Enter a 5-digit ZIP code.'}
+              {result === 'invalid' && <span className="text-fg">Enter a 5-digit ZIP code.</span>}
             </p>
           </form>
-        </div>
-
-        <div>
-          <h3 className="heading m-0 text-[1.15rem] text-muted">Towns we cover every week</h3>
-          <ul className="mt-5 grid list-none grid-cols-2 gap-x-6 p-0 sm:grid-cols-3">
-            {site.serviceArea.towns.map((town) => (
-              <li key={town} className="heading border-b border-rule py-3 text-[1.25rem]">
-                {town}
-              </li>
-            ))}
-          </ul>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

@@ -1,8 +1,8 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { site } from '#/config/site'
-import { track } from '#/lib/track'
-import { clearDraft, readDraft, verifiedRedirectUri } from '#/lib/whop-oauth'
+import { submitLead, trackLead } from '#/lib/submit-lead'
+import { clearDraft, readDraft, reportToOpener, verifiedRedirectUri } from '#/lib/whop-oauth'
 
 type VerifiedSearch = { code?: string; state?: string; error?: string; error_description?: string }
 
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/estimate/verified')({
   component: VerifiedPage,
 })
 
-type Face = { kind: 'sending' } | { kind: 'sent'; firstName: string } | { kind: 'error'; message: string }
+type Face = { kind: 'sending' } | { kind: 'handed-off' } | { kind: 'sent'; firstName: string } | { kind: 'error'; message: string }
 
 function VerifiedPage() {
   const search = Route.useSearch()
@@ -28,6 +28,13 @@ function VerifiedPage() {
   useEffect(() => {
     if (ran.current) return
     ran.current = true
+
+    // Pop-up flow: hand the code to the estimate form that opened this window.
+    if (search.state && reportToOpener({ state: search.state, code: search.code, error: search.error })) {
+      setFace({ kind: 'handed-off' })
+      window.setTimeout(() => window.close(), 400)
+      return
+    }
 
     const draft = readDraft()
     if (search.error) {
@@ -41,31 +48,14 @@ function VerifiedPage() {
 
     ;(async () => {
       try {
-        const response = await fetch('/api/lead', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...draft.form,
-            page: draft.page,
-            code: search.code,
-            codeVerifier: draft.verifier,
-            redirectUri: verifiedRedirectUri(),
-          }),
+        const { leadId } = await submitLead({
+          form: draft.form,
+          page: draft.page,
+          code: search.code!,
+          codeVerifier: draft.verifier,
+          redirectUri: verifiedRedirectUri(),
         })
-        const result = (await response.json().catch(() => ({}))) as { leadId?: string | null; error?: string }
-        if (!response.ok) throw new Error(result.error || 'We couldn’t send your request. Please call us instead.')
-
-        // estimate_requested: fires once per lead, keyed by the Whop lead ID.
-        const eventId = result.leadId ?? undefined
-        track('estimate_requested', {
-          event_id: eventId,
-          service: draft.form.service,
-          roof_type: draft.form.roofType,
-          timeline: draft.form.timeline,
-          zip: draft.form.zip,
-        })
-        track('lead', { event_id: eventId, name: draft.form.name, email: draft.form.email, phone: draft.form.phone })
-
+        trackLead(draft.form, leadId)
         clearDraft()
         // Drop the one-time code from the address bar.
         window.history.replaceState(null, '', '/estimate/verified')
@@ -78,20 +68,27 @@ function VerifiedPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-24">
+      {face.kind === 'handed-off' && (
+        <div role="status">
+          <h1 className="display text-[clamp(2rem,5vw,3rem)] text-fg">Email confirmed</h1>
+          <p className="mt-4 text-dim">You can close this window. Your request is being sent from the page you started on.</p>
+        </div>
+      )}
+
       {face.kind === 'sending' && (
         <div role="status">
           <h1 className="display text-[clamp(2rem,5vw,3rem)]">Sending your request…</h1>
-          <p className="mt-4 text-muted">Your email is confirmed. This takes a second.</p>
+          <p className="mt-4 text-dim">Your email is confirmed. This takes a second.</p>
         </div>
       )}
 
       {face.kind === 'sent' && (
         <div role="status">
           <h1 className="display text-[clamp(2.2rem,5vw,3.4rem)]">Thanks, {face.firstName}. Your request is in.</h1>
-          <p className="measure mt-5 text-[1.12rem] text-ink/85">
+          <p className="measure mt-5 text-[1.12rem] text-dim">
             We’ll reply within one business day with next steps and, for most repairs, a ballpark price. If water is coming in right
             now, call our emergency line at{' '}
-            <a className="font-bold text-ink" href={`tel:${site.company.emergencyLine.replace(/[^\d+]/g, '')}`}>
+            <a className="font-bold text-fg" href={`tel:${site.company.emergencyLine.replace(/[^\d+]/g, '')}`}>
               {site.company.emergencyLine}
             </a>
             .
@@ -100,7 +97,7 @@ function VerifiedPage() {
             <Link to="/book/$planKey" params={{ planKey: 'inspection' }} className="btn btn-primary">
               Book a {`$${site.plans.inspection.price}`} inspection now
             </Link>
-            <Link to="/" className="btn btn-ghost text-ink">
+            <Link to="/" className="btn btn-ghost">
               Back to the homepage
             </Link>
           </div>
@@ -110,12 +107,12 @@ function VerifiedPage() {
       {face.kind === 'error' && (
         <div role="alert">
           <h1 className="display text-[clamp(2rem,5vw,3rem)]">Your request wasn’t sent</h1>
-          <p className="measure mt-5 text-[1.1rem] text-ink/85">{face.message}</p>
+          <p className="measure mt-5 text-[1.1rem] text-dim">{face.message}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="/#estimate" className="btn btn-primary">
               Back to the estimate form
             </a>
-            <a href={site.company.phoneHref} className="btn btn-ghost text-ink">
+            <a href={site.company.phoneHref} className="btn btn-ghost">
               Call {site.company.phone}
             </a>
           </div>

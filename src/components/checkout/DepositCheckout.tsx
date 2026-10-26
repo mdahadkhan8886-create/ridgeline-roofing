@@ -122,9 +122,9 @@ export function DepositCheckout() {
 
   if (!plan.whopPlanId) {
     return (
-      <div className="rounded-md border-2 border-ink bg-white p-6">
+      <div className="card-raised p-6">
         <h2 className="heading m-0 text-xl">Online deposits aren’t switched on yet</h2>
-        <p className="mt-2 text-ink/85">The owner still needs to add the deposit plan’s Whop ID to the site config. Call us to book your date.</p>
+        <p className="mt-2 text-dim">The owner still needs to add the deposit plan’s Whop ID to the site config. Call us to book your date.</p>
       </div>
     )
   }
@@ -132,20 +132,20 @@ export function DepositCheckout() {
   const unavailable = !accountLoading && !accountId
 
   return (
-    <div className="grid gap-6 rounded-md border-2 border-ink bg-white p-5 sm:p-7">
+    <div className="grid gap-6 card-raised p-5 sm:p-7">
       <CustomerFields value={customer} onChange={setCustomer} disabled={busy} />
 
       <div>
         <h3 className="heading m-0 mb-1 text-[1.15rem]">Card to keep on file</h3>
-        <p className="mb-3 mt-0 text-sm text-muted">
+        <p className="mb-3 mt-0 text-sm text-dim">
           Saved securely by Whop. We charge the {formatUSD(plan.price)} deposit now, and only bill the final balance after your job is
           finished and you’ve approved the invoice.
         </p>
         {unavailable ? (
-          <p className="text-ink/85">Online payment is unavailable right now. Please call us to book.</p>
+          <p className="text-dim">Online payment is unavailable right now. Please call us to book.</p>
         ) : (
           <>
-            {(loading || accountLoading) && !loadError && <p className="text-sm text-muted">Loading secure card form…</p>}
+            {(loading || accountLoading) && !loadError && <p className="text-sm text-dim">Loading secure card form…</p>}
             <div ref={paymentRef} className="whop-slot" />
             <div ref={brandingRef} className="whop-slot mt-3" />
           </>
@@ -158,7 +158,7 @@ export function DepositCheckout() {
           type="checkbox"
           checked={agreed}
           onChange={(e) => setAgreed(e.target.checked)}
-          className="mt-1 h-5 w-5 flex-none accent-[var(--rr-slate)]"
+          className="mt-1 h-5 w-5 flex-none accent-[var(--rr-accent)]"
           disabled={busy}
         />
         <span>
@@ -168,7 +168,7 @@ export function DepositCheckout() {
       </label>
 
       {error && (
-        <p role="alert" className="m-0 rounded border-l-4 border-ink bg-hivis/25 px-4 py-3 font-semibold">
+        <p role="alert" className="m-0 rounded-lg border border-copper/50 bg-copper/10 px-4 py-3 font-semibold text-fg">
           {error}
         </p>
       )}

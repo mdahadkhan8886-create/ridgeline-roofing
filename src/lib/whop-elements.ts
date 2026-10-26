@@ -95,7 +95,7 @@ let loading: Promise<WhopElementsInstance> | null = null
 
 /** Brand the Whop elements to match the site. */
 const appearance = {
-  theme: { appearance: 'light' },
+  theme: { appearance: 'dark' },
 }
 
 export function loadWhopElements(): Promise<WhopElementsInstance> {

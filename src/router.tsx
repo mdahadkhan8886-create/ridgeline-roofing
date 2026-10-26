@@ -4,9 +4,9 @@ import { routeTree } from './routeTree.gen'
 function NotFound() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6">
-      <h1 className="display text-[clamp(2rem,5vw,3rem)]">This page isn’t here</h1>
-      <p className="mt-4 text-muted">
-        <a href="/" className="font-bold text-ink">
+      <h1 className="display text-[clamp(2rem,5vw,3rem)] text-fg">This page isn’t here</h1>
+      <p className="mt-4 text-dim">
+        <a href="/" className="font-bold text-amber">
           Go to the homepage
         </a>{' '}
         or call us and we’ll help.

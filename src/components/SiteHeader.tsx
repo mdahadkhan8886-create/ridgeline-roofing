@@ -5,9 +5,10 @@ import { RoofMark } from '#/components/RoofMark'
 
 const NAV = [
   { href: '/#services', label: 'Services' },
+  { href: '/#calculator', label: 'Cost calculator' },
   { href: '/#pricing', label: 'Pricing' },
-  { href: '/#service-area', label: 'Service area' },
-  { href: '/#reviews', label: 'Reviews' },
+  { href: '/#projects', label: 'Projects' },
+  { href: '/#faq', label: 'FAQ' },
   { href: '/#contact', label: 'Contact' },
 ]
 
@@ -15,16 +16,16 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 border-b border-rule/70 bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/85">
+    <header className="sticky top-0 z-40 border-b border-line/80 bg-night/80 backdrop-blur-xl supports-[backdrop-filter]:bg-night/60">
       <div className="mx-auto flex h-18 max-w-6xl items-center gap-6 px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2.5 text-ink no-underline" onClick={() => setOpen(false)}>
+        <Link to="/" className="flex items-center gap-2.5 text-fg no-underline" onClick={() => setOpen(false)}>
           <RoofMark className="h-9 w-9" />
           <span className="heading text-[1.2rem]">{site.company.name}</span>
         </Link>
 
-        <nav aria-label="Main" className="ml-auto hidden items-center gap-6 lg:flex">
+        <nav aria-label="Main" className="ml-auto hidden items-center gap-5 xl:flex">
           {NAV.map((item) => (
-            <a key={item.href} href={item.href} className="text-[0.95rem] font-semibold text-ink/80 no-underline hover:text-ink">
+            <a key={item.href} href={item.href} className="text-[0.95rem] font-semibold text-dim no-underline transition-colors hover:text-amber">
               {item.label}
             </a>
           ))}
@@ -32,7 +33,7 @@ export function SiteHeader() {
 
         <a
           href={site.company.phoneHref}
-          className="ml-auto hidden font-bold text-ink no-underline sm:inline lg:ml-0"
+          className="ml-auto hidden font-bold text-fg no-underline hover:text-amber sm:inline xl:ml-0"
         >
           {site.company.phone}
         </a>
@@ -42,7 +43,7 @@ export function SiteHeader() {
 
         <button
           type="button"
-          className="ml-auto inline-flex h-11 w-11 items-center justify-center rounded border border-rule text-ink sm:ml-0 lg:hidden"
+          className="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-lg border border-line text-fg sm:ml-0 xl:hidden"
           aria-expanded={open}
           aria-controls="mobile-nav"
           onClick={() => setOpen((v) => !v)}
@@ -55,14 +56,14 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav id="mobile-nav" aria-label="Main" className="border-t border-rule/70 bg-paper px-4 pb-5 pt-2 lg:hidden">
+        <nav id="mobile-nav" aria-label="Main" className="border-t border-line bg-night px-4 pb-5 pt-2 xl:hidden">
           <ul className="m-0 grid list-none gap-1 p-0">
             {NAV.map((item) => (
               <li key={item.href}>
                 <a
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className="block rounded px-2 py-3 text-lg font-semibold text-ink no-underline hover:bg-white"
+                  className="block rounded-lg px-2 py-3 text-lg font-semibold text-fg no-underline hover:bg-surface"
                 >
                   {item.label}
                 </a>
@@ -73,7 +74,7 @@ export function SiteHeader() {
             <a href="/#estimate" onClick={() => setOpen(false)} className="btn btn-primary">
               Free estimate
             </a>
-            <a href={site.company.phoneHref} className="btn btn-ghost text-ink">
+            <a href={site.company.phoneHref} className="btn btn-ghost">
               Call {site.company.phone}
             </a>
           </div>

@@ -12,6 +12,8 @@ export type TrackEvent =
   | 'estimate_requested'
   | 'service_viewed'
   | 'deposit_started'
+  | 'quote_calculated'
+  | 'project_viewed'
   | 'lead'
   | 'view_content'
 

@@ -22,7 +22,7 @@ export const Route = createFileRoute('/book/$planKey')({
     <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6">
       <h1 className="display text-4xl">That service can’t be booked online</h1>
       <p className="mt-4">
-        <a href="/#estimate" className="font-bold text-ink">
+        <a href="/#estimate" className="font-bold text-fg">
           Request an estimate
         </a>{' '}
         and we’ll get back to you within one business day.
@@ -52,33 +52,33 @@ function BookPage() {
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-[1fr_1.1fr]">
       <div>
-        <Link to="/" hash="pricing" className="text-sm font-semibold text-muted no-underline hover:text-ink">
+        <Link to="/" hash="pricing" className="text-sm font-semibold text-dim no-underline hover:text-amber">
           Back to prices
         </Link>
         <h1 className="display mt-4 text-[clamp(2.2rem,5vw,3.6rem)]">{plan.name}</h1>
         <p className="mt-4 flex items-baseline gap-3">
-          <span className="display text-[2.6rem]">{formatUSD(plan.price)}</span>
-          <span className="text-muted">{plan.priceNote}</span>
+          <span className="display text-glow text-[2.6rem]">{formatUSD(plan.price)}</span>
+          <span className="text-dim">{plan.priceNote}</span>
         </p>
-        <p className="measure mt-4 text-[1.1rem] text-ink/85">{plan.description}</p>
+        <p className="measure mt-4 text-[1.1rem] text-dim">{plan.description}</p>
         <ul className="mt-6 grid list-none gap-2 p-0">
           {plan.includes.map((item) => (
             <li key={item} className="flex gap-3">
-              <span aria-hidden="true" className="mt-[0.65em] h-1.5 w-3 flex-none bg-hivis" />
+              <span aria-hidden="true" className="mt-[0.65em] h-1.5 w-3 flex-none bg-amber" />
               {item}
             </li>
           ))}
         </ul>
-        <div className="mt-10 border-t border-rule pt-6">
+        <div className="mt-10 border-t border-line pt-6">
           <h2 className="heading m-0 text-[1.15rem]">What happens after you pay</h2>
           <ol className="mt-3 grid gap-2 pl-5">
             <li>You get a receipt from Whop by email right away.</li>
             <li>We call within one business day to pick a time.</li>
             <li>The crew arrives in a marked truck and sends photos when they’re done.</li>
           </ol>
-          <p className="mt-6 text-sm text-muted">
+          <p className="mt-6 text-sm text-dim">
             Questions first? Call{' '}
-            <a href={site.company.phoneHref} className="font-bold text-ink">
+            <a href={site.company.phoneHref} className="font-bold text-fg">
               {site.company.phone}
             </a>
             .

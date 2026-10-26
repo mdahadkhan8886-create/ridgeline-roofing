@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /contractor
+Disallow: /api/
+Disallow: /estimate/verified
+Disallow: /checkout/return
+Sitemap: https://ridgeline-roofing-mk26.whop.site/sitemap.xml

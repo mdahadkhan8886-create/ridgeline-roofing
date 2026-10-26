@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContractorRouteImport } from './routes/contractor'
 import { Route as DepositRouteImport } from './routes/deposit'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiDepositRouteImport } from './routes/api/deposit'
 import { Route as ApiDepositChargeRouteImport } from './routes/api/deposit-charge'
 import { Route as ApiLeadRouteImport } from './routes/api/lead'
@@ -22,6 +23,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout/return'
 import { Route as EstimateVerifiedRouteImport } from './routes/estimate/verified'
 import { Route as ApiAdminInvoiceRouteImport } from './routes/api/admin/invoice'
 import { Route as ApiAdminOverviewRouteImport } from './routes/api/admin/overview'
+import { Route as ApiWebhooksWhopRouteImport } from './routes/api/webhooks/whop'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,6 +38,11 @@ const ContractorRoute = ContractorRouteImport.update({
 const DepositRoute = DepositRouteImport.update({
   id: '/deposit',
   path: '/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiDepositRoute = ApiDepositRouteImport.update({
@@ -88,11 +95,17 @@ const ApiAdminOverviewRoute = ApiAdminOverviewRouteImport.update({
   path: '/api/admin/overview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksWhopRoute = ApiWebhooksWhopRouteImport.update({
+  id: '/api/webhooks/whop',
+  path: '/api/webhooks/whop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contractor': typeof ContractorRoute
   '/deposit': typeof DepositRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/deposit': typeof ApiDepositRoute
   '/api/deposit-charge': typeof ApiDepositChargeRoute
   '/api/lead': typeof ApiLeadRoute
@@ -103,11 +116,13 @@ export interface FileRoutesByFullPath {
   '/estimate/verified': typeof EstimateVerifiedRoute
   '/api/admin/invoice': typeof ApiAdminInvoiceRoute
   '/api/admin/overview': typeof ApiAdminOverviewRoute
+  '/api/webhooks/whop': typeof ApiWebhooksWhopRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contractor': typeof ContractorRoute
   '/deposit': typeof DepositRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/deposit': typeof ApiDepositRoute
   '/api/deposit-charge': typeof ApiDepositChargeRoute
   '/api/lead': typeof ApiLeadRoute
@@ -118,12 +133,14 @@ export interface FileRoutesByTo {
   '/estimate/verified': typeof EstimateVerifiedRoute
   '/api/admin/invoice': typeof ApiAdminInvoiceRoute
   '/api/admin/overview': typeof ApiAdminOverviewRoute
+  '/api/webhooks/whop': typeof ApiWebhooksWhopRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/contractor': typeof ContractorRoute
   '/deposit': typeof DepositRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/deposit': typeof ApiDepositRoute
   '/api/deposit-charge': typeof ApiDepositChargeRoute
   '/api/lead': typeof ApiLeadRoute
@@ -134,6 +151,7 @@ export interface FileRoutesById {
   '/estimate/verified': typeof EstimateVerifiedRoute
   '/api/admin/invoice': typeof ApiAdminInvoiceRoute
   '/api/admin/overview': typeof ApiAdminOverviewRoute
+  '/api/webhooks/whop': typeof ApiWebhooksWhopRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +159,7 @@ export interface FileRouteTypes {
     | '/'
     | '/contractor'
     | '/deposit'
+    | '/sitemap.xml'
     | '/api/deposit'
     | '/api/deposit-charge'
     | '/api/lead'
@@ -151,11 +170,13 @@ export interface FileRouteTypes {
     | '/estimate/verified'
     | '/api/admin/invoice'
     | '/api/admin/overview'
+    | '/api/webhooks/whop'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/contractor'
     | '/deposit'
+    | '/sitemap.xml'
     | '/api/deposit'
     | '/api/deposit-charge'
     | '/api/lead'
@@ -166,11 +187,13 @@ export interface FileRouteTypes {
     | '/estimate/verified'
     | '/api/admin/invoice'
     | '/api/admin/overview'
+    | '/api/webhooks/whop'
   id:
     | '__root__'
     | '/'
     | '/contractor'
     | '/deposit'
+    | '/sitemap.xml'
     | '/api/deposit'
     | '/api/deposit-charge'
     | '/api/lead'
@@ -181,12 +204,14 @@ export interface FileRouteTypes {
     | '/estimate/verified'
     | '/api/admin/invoice'
     | '/api/admin/overview'
+    | '/api/webhooks/whop'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContractorRoute: typeof ContractorRoute
   DepositRoute: typeof DepositRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiDepositRoute: typeof ApiDepositRoute
   ApiDepositChargeRoute: typeof ApiDepositChargeRoute
   ApiLeadRoute: typeof ApiLeadRoute
@@ -197,6 +222,7 @@ export interface RootRouteChildren {
   EstimateVerifiedRoute: typeof EstimateVerifiedRoute
   ApiAdminInvoiceRoute: typeof ApiAdminInvoiceRoute
   ApiAdminOverviewRoute: typeof ApiAdminOverviewRoute
+  ApiWebhooksWhopRoute: typeof ApiWebhooksWhopRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -220,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/deposit'
       fullPath: '/deposit'
       preLoaderRoute: typeof DepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/deposit': {
@@ -292,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminOverviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/whop': {
+      id: '/api/webhooks/whop'
+      path: '/api/webhooks/whop'
+      fullPath: '/api/webhooks/whop'
+      preLoaderRoute: typeof ApiWebhooksWhopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -299,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContractorRoute: ContractorRoute,
   DepositRoute: DepositRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiDepositRoute: ApiDepositRoute,
   ApiDepositChargeRoute: ApiDepositChargeRoute,
   ApiLeadRoute: ApiLeadRoute,
@@ -309,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   EstimateVerifiedRoute: EstimateVerifiedRoute,
   ApiAdminInvoiceRoute: ApiAdminInvoiceRoute,
   ApiAdminOverviewRoute: ApiAdminOverviewRoute,
+  ApiWebhooksWhopRoute: ApiWebhooksWhopRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

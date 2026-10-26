@@ -51,6 +51,10 @@ export const site = {
   company: {
     name: 'Ridgeline Roofing',
     shortName: 'Ridgeline',
+    /** The live site address, used for share previews and search engines. */
+    url: 'https://ridgeline-roofing-mk26.whop.site',
+    address: '2201 Commerce St, Plano, TX 75074',
+    addressParts: { street: '2201 Commerce St', city: 'Plano', region: 'TX', postalCode: '75074', country: 'US' },
     tagline: 'Roofs built for the next storm.',
     intro:
       'Repairs, full replacements and honest inspections for homes across North Texas. Upfront prices, a written warranty, and a crew that cleans up before it leaves.',
@@ -58,7 +62,6 @@ export const site = {
     phoneHref: 'tel:+12145550147',
     emergencyLine: '(214) 555-0199',
     email: 'hello@ridgelineroofing.example',
-    address: '2201 Commerce St, Plano, TX 75074',
     hours: [
       { days: 'Mon – Fri', time: '7:00 am – 6:00 pm' },
       { days: 'Saturday', time: '8:00 am – 2:00 pm' },
@@ -69,22 +72,31 @@ export const site = {
     warrantyYears: 10,
   },
 
-  /** Brand colors. Any CSS color works. */
+  /**
+   * Brand colors (dark "storm night" theme). Any CSS color works.
+   * night → page background, surface/raised → panels, line → borders,
+   * accent → buttons and highlights (amber work-light), accent2 → its warm
+   * gradient partner (copper), bolt → the lightning flash in the hero.
+   */
   theme: {
-    sky: '#E9F0F3',
-    slate: '#1E2B32',
-    shingle: '#4A5A63',
-    flashing: '#A9BCC5',
-    accent: '#F4C430',
-    accentInk: '#1E2B32',
+    night: '#0A0F13',
+    surface: '#10181D',
+    raised: '#172229',
+    line: '#24333C',
+    text: '#EEF3F6',
+    muted: '#9AACB7',
+    accent: '#FFC233',
+    accent2: '#FF7A1A',
+    accentInk: '#1A1203',
+    bolt: '#8FD3FF',
   },
 
-  /** Short facts shown under the hero. */
+  /** Short facts under the hero. Numbers count up when they scroll into view. */
   facts: [
-    { value: '2009', label: 'Roofing in North Texas since' },
-    { value: '10-year', label: 'Written workmanship warranty' },
-    { value: '24 hrs', label: 'Typical estimate turnaround' },
-    { value: '4.9 / 5', label: 'Average customer rating' },
+    { value: 2400, decimals: 0, suffix: '+', label: 'Roofs replaced since 2009' },
+    { value: 10, decimals: 0, suffix: '-year', label: 'Written workmanship warranty' },
+    { value: 24, decimals: 0, suffix: ' hrs', label: 'Typical estimate turnaround' },
+    { value: 4.9, decimals: 1, suffix: ' / 5', label: 'Average customer rating' },
   ],
 
   services: [
@@ -267,6 +279,98 @@ export const site = {
     roofTypes: ['Asphalt shingle', 'Metal', 'Tile', 'Flat / low slope', 'Not sure'],
     timelines: ['As soon as possible', 'Within a month', 'In 1–3 months', 'Just researching'],
   },
+
+  /**
+   * Roof cost calculator. Prices are per roofing "square" (100 sq ft of roof).
+   * Tune these to the contractor's real numbers; the range shown is ±spread.
+   */
+  calculator: {
+    title: 'What will a new roof cost?',
+    text: 'A quick ballpark for a full replacement. Your written quote is fixed after we measure the roof in person.',
+    note: 'Ballpark for planning only. Taxes, permits, decking repairs and upgrades are quoted after we see the roof.',
+    materials: [
+      { id: 'architectural', name: 'Architectural shingle', perSquare: 520, note: '30-year shingle, most popular' },
+      { id: 'designer', name: 'Designer shingle', perSquare: 690, note: 'Thicker, slate or shake look' },
+      { id: 'metal', name: 'Standing-seam metal', perSquare: 1150, note: '50+ year life, hail resistant' },
+    ],
+    pitches: [
+      { label: '4/12', rise: 4, factor: 1.054, note: 'Low' },
+      { label: '6/12', rise: 6, factor: 1.118, note: 'Standard' },
+      { label: '8/12', rise: 8, factor: 1.202, note: 'Steep' },
+      { label: '10/12', rise: 10, factor: 1.302, note: 'Very steep' },
+      { label: '12/12', rise: 12, factor: 1.414, note: 'Extreme' },
+    ],
+    /** Extra per square for each existing layer torn off. */
+    tearOffPerSquare: 95,
+    /** Steep roofs need extra safety gear and time, per square above 8/12. */
+    steepPerSquare: 60,
+    /** Overhang and waste allowance applied to the footprint. */
+    wasteFactor: 1.12,
+    minimumJob: 6500,
+    spread: 0.1,
+    footprint: { min: 900, max: 5000, step: 50, default: 2200 },
+  },
+
+  /**
+   * Before / after projects. Add photo URLs (beforeImage / afterImage) to show
+   * real jobs; without them the slider shows an illustration of the work.
+   */
+  projects: [
+    {
+      id: 'frisco-hail',
+      title: 'Hail-damaged roof, fully replaced',
+      town: 'Frisco',
+      scope: 'Tear-off to the deck, new architectural shingles, ridge vent',
+      duration: '1.5 days',
+      beforeImage: '',
+      afterImage: '',
+    },
+    {
+      id: 'allen-leak',
+      title: 'Kitchen leak traced and fixed',
+      town: 'Allen',
+      scope: 'Cracked vent boot and 14 shingles replaced, deck dried',
+      duration: '3 hours',
+      beforeImage: '',
+      afterImage: '',
+    },
+    {
+      id: 'plano-metal',
+      title: 'Asphalt to standing-seam metal',
+      town: 'Plano',
+      scope: 'Hail-rated standing-seam panels, new flashing, seamless gutters',
+      duration: '3 days',
+      beforeImage: '',
+      afterImage: '',
+    },
+  ],
+
+  faq: [
+    {
+      q: 'Will my insurance pay for a new roof after hail?',
+      a: 'Often, yes. We inspect, photograph every hit and give you a report your adjuster can use. Many homeowners only pay their deductible. We never ask you to sign anything with your insurer on your behalf.',
+    },
+    {
+      q: 'How long does a full replacement take?',
+      a: 'Most homes take one or two days. We tarp and protect landscaping first, and run a magnetic nail sweep before we leave each day.',
+    },
+    {
+      q: 'Why do you take a deposit?',
+      a: 'The deposit reserves your install date and orders your materials. It is deducted from your final invoice, and your card stays saved securely with Whop, our payment processor, not with us.',
+    },
+    {
+      q: 'When do I pay the rest?',
+      a: 'After the final walk-through. You get an itemized invoice with the deposit already credited. Pay it online, or approve a charge to the card on file.',
+    },
+    {
+      q: 'Can I pay over time?',
+      a: 'Eligible customers can choose buy-now-pay-later options such as Klarna or Afterpay at checkout when they are offered. There is no separate loan application.',
+    },
+    {
+      q: 'What does the warranty cover?',
+      a: 'Our written 10-year workmanship warranty covers leaks and installation defects. Manufacturer warranties on materials are registered in your name.',
+    },
+  ],
 
   /** Whop product that the plans and invoices belong to (prod_…). */
   whop: {
